@@ -47,7 +47,7 @@ type Tello struct {
 	Flying bool
 }
 
-func NewTello(a net.Adapter, port string) *Tello {
+func New(a net.Adapter, port string) *Tello {
 	n := &Tello{
 		adaptor:   a,
 		reqAddr:   "192.168.10.1:8889",
@@ -93,6 +93,9 @@ func (t *Tello) Start() (err error) {
 
 // TakeOff tells the Tello to takeoff
 func (t *Tello) TakeOff() (err error) {
+	t.cmdMutex.Lock()
+	defer t.cmdMutex.Unlock()
+
 	t.createPacketHeader(takeoffCommand, 0x68, 0)
 	t.seq++
 	binary.LittleEndian.PutUint16(t.cmdPacket[7:], uint16(t.seq))
@@ -105,6 +108,9 @@ func (t *Tello) TakeOff() (err error) {
 
 // Land tells the Tello to land
 func (t *Tello) Land() (err error) {
+	t.cmdMutex.Lock()
+	defer t.cmdMutex.Unlock()
+
 	t.createPacketHeader(landCommand, 0x68, 1)
 	t.seq++
 	binary.LittleEndian.PutUint16(t.cmdPacket[7:], uint16(t.seq))
