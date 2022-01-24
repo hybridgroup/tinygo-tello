@@ -61,14 +61,12 @@ func New(a net.Adapter, port string) *Tello {
 func (t *Tello) Start() (err error) {
 	reqAddr, err := net.ResolveUDPAddr("udp", t.reqAddr)
 	if err != nil {
-		println(err)
+		println("reqAddr", err)
 		return err
 	}
-	respPort, err := net.ResolveUDPAddr("udp", ":"+t.respPort)
-	if err != nil {
-		println(err)
-		return err
-	}
+
+	p, _ := strconv.Atoi(t.respPort)
+	respPort := &net.UDPAddr{Port: p}
 
 	t.conn, err = net.DialUDP("udp", respPort, reqAddr)
 	if err != nil {
