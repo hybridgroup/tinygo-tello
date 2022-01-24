@@ -7,7 +7,7 @@ import (
 )
 
 // Tello drone info here
-const ssid = ""
+const ssid = "TELLO-C48E59"
 const pass = ""
 
 var (
@@ -49,8 +49,10 @@ func connectToAP(connectHandler func()) {
 
 	println("Connected.")
 
-	time.Sleep(2 * time.Second)
-	connectHandler()
+	time.Sleep(3 * time.Second)
+	if connectHandler != nil {
+		connectHandler()
+	}
 }
 
 func message(msg string) {
