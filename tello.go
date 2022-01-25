@@ -1,3 +1,4 @@
+// package tello is a client for the Tello drone that works with TinyGo.
 package tello
 
 import (
@@ -9,30 +10,11 @@ import (
 	"tinygo.org/x/drivers/net"
 )
 
-const (
-	messageStart   = 0x00cc // 204
-	wifiMessage    = 0x001a // 26
-	videoRateQuery = 0x0028 // 40
-	lightMessage   = 0x0035 // 53
-	flightMessage  = 0x0056 // 86
-	logMessage     = 0x1050 // 4176
-
-	videoEncoderRateCommand = 0x0020 // 32
-	videoStartCommand       = 0x0025 // 37
-	exposureCommand         = 0x0034 // 52
-	timeCommand             = 0x0046 // 70
-	stickCommand            = 0x0050 // 80
-	takeoffCommand          = 0x0054 // 84
-	landCommand             = 0x0055 // 85
-	flipCommand             = 0x005c // 92
-	throwtakeoffCommand     = 0x005d // 93
-	palmLandCommand         = 0x005e // 94
-	bounceCommand           = 0x1053 // 4179
-)
-
+// Tello represents a client to the DJI Tello drone.
 type Tello struct {
 	adaptor   net.Adapter
 	reqAddr   string
+	reqPort   string
 	respPort  string
 	videoPort string
 	conn      net.Conn
@@ -50,7 +32,8 @@ type Tello struct {
 func New(a net.Adapter, port string) *Tello {
 	n := &Tello{
 		adaptor:   a,
-		reqAddr:   "192.168.10.1:8889",
+		reqAddr:   "192.168.10.1",
+		reqPort:   "8889",
 		respPort:  port,
 		videoPort: "11111",
 	}
@@ -59,13 +42,15 @@ func New(a net.Adapter, port string) *Tello {
 }
 
 func (t *Tello) Start() (err error) {
-	reqAddr, err := net.ResolveUDPAddr("udp", t.reqAddr)
+	reqAddr, err := net.ResolveUDPAddr("udp", t.reqAddr+":"+t.reqPort)
 	if err != nil {
-		println("reqAddr", err)
 		return err
 	}
 
-	p, _ := strconv.Atoi(t.respPort)
+	p, err := strconv.Atoi(t.respPort)
+	if err != nil {
+		return err
+	}
 	respPort := &net.UDPAddr{Port: p}
 
 	t.conn, err = net.DialUDP("udp", respPort, reqAddr)
