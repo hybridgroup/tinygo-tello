@@ -18,10 +18,10 @@ func main() {
 	a := initAdaptor()
 	drone = tello.New(a, "8888")
 
-	connectToAP(connectDrone)
+	connectToAP(droneConnected)
 }
 
-func connectDrone() {
+func droneConnected() {
 	println("Starting drone")
 	drone.Start()
 
@@ -35,26 +35,34 @@ func connectDrone() {
 	drone.Land()
 }
 
-// connect to access point
+// connect to drone wifi
 func connectToAP(connectHandler func()) {
+	var err error
 	time.Sleep(2 * time.Second)
-	println("Connecting to " + ssid)
-	err := adaptor.ConnectToAccessPoint(ssid, pass, 10*time.Second)
-	if err != nil { // error connecting to AP
-		for {
+	for i := 0; i < 3; i++ {
+		println("Connecting to " + ssid)
+		err = adaptor.ConnectToAccessPoint(ssid, pass, 10*time.Second)
+		if err != nil {
 			println(err)
 			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		// success
+		println("Connected.")
+		time.Sleep(3 * time.Second)
+		if connectHandler != nil {
+			connectHandler()
 		}
 	}
 
-	println("Connected.")
-
-	time.Sleep(3 * time.Second)
-	if connectHandler != nil {
-		connectHandler()
-	}
+	// couldn't connect to AP
+	failMessage(err.Error())
 }
 
-func message(msg string) {
-	println(msg, "\r")
+func failMessage(msg string) {
+	for {
+		println(msg)
+		time.Sleep(1 * time.Second)
+	}
 }
