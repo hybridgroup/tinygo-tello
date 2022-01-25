@@ -90,12 +90,8 @@ func controlDrone() {
 			if err != nil {
 				println(err)
 			}
-
-		case b3push:
-
-		case b4push:
-
 		}
+
 		rightStick := getRightStick()
 		switch {
 		case rightStick.y+detente < center:
@@ -139,6 +135,7 @@ func controlDrone() {
 }
 
 func failMessage(msg string) {
+	failure = msg
 	for {
 		println(msg)
 		time.Sleep(1 * time.Second)

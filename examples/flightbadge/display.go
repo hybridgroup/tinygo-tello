@@ -13,7 +13,17 @@ import (
 )
 
 var (
-	display st7735.Device
+	display   st7735.Device
+	failure   string
+	realblack = color.RGBA{0, 0, 0, 255}
+	black     = color.RGBA{127, 127, 127, 255}
+)
+
+const (
+	noInfo = iota
+	failureInfo
+	connectingInfo
+	flyingInfo
 )
 
 func initDisplay() {
@@ -29,48 +39,73 @@ func initDisplay() {
 		Rotation: st7735.ROTATION_90,
 	})
 
-	display.FillScreen(color.RGBA{0, 0, 0, 255})
+	display.FillScreen(realblack)
 }
 
 func handleDisplay() {
-	black := color.RGBA{127, 127, 127, 255}
-	realblack := color.RGBA{0, 0, 0, 255}
-
+	currentScreen := noInfo
 	for {
-		display.FillRectangle(40, 5, 80, 40, color.RGBA{0, 0, 0, 255})
+		switch {
+		case len(failure) > 0:
+			if currentScreen != failureInfo {
+				display.FillScreen(realblack)
+				currentScreen = failureInfo
+			}
 
-		x := strconv.Itoa(int(xPos))
-		y := strconv.Itoa(int(yPos))
-		msg := "x: " + x
-		tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 20, msg, black)
+			tinyfont.WriteLine(&display, &freemono.Regular9pt7b, 10, 20, "ERROR", black)
+			tinyfont.WriteLine(&display, &freemono.Regular9pt7b, 10, 40, failure, black)
 
-		msg2 := "y: " + y
-		tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 40, msg2, black)
+		case !droneconnected:
+			if currentScreen != connectingInfo {
+				display.FillScreen(realblack)
+				currentScreen = connectingInfo
+			}
 
-		var radius int16 = 4
-		if b1push {
-			tinydraw.FilledCircle(&display, 16+32*0, 64-radius-1, radius, black)
-		} else {
-			tinydraw.FilledCircle(&display, 16+32*0, 64-radius-1, radius, realblack)
-			tinydraw.Circle(&display, 16+32*0, 64-radius-1, radius, black)
-		}
-		if b2push {
-			tinydraw.FilledCircle(&display, 16+32*1, 64-radius-1, radius, black)
-		} else {
-			tinydraw.FilledCircle(&display, 16+32*1, 64-radius-1, radius, realblack)
-			tinydraw.Circle(&display, 16+32*1, 64-radius-1, radius, black)
-		}
-		if b3push {
-			tinydraw.FilledCircle(&display, 16+32*2, 64-radius-1, radius, black)
-		} else {
-			tinydraw.FilledCircle(&display, 16+32*2, 64-radius-1, radius, realblack)
-			tinydraw.Circle(&display, 16+32*2, 64-radius-1, radius, black)
-		}
-		if b4push {
-			tinydraw.FilledCircle(&display, 16+32*3, 64-radius-1, radius, black)
-		} else {
-			tinydraw.FilledCircle(&display, 16+32*3, 64-radius-1, radius, realblack)
-			tinydraw.Circle(&display, 16+32*3, 64-radius-1, radius, black)
+			tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 20, "Connecting", black)
+			tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 40, ssid, black)
+			time.Sleep(100 * time.Millisecond)
+
+		default:
+			if currentScreen != flyingInfo {
+				display.FillScreen(realblack)
+				currentScreen = flyingInfo
+			}
+
+			display.FillRectangle(40, 5, 80, 40, realblack)
+
+			x := strconv.Itoa(int(xPos))
+			y := strconv.Itoa(int(yPos))
+			msg := "x: " + x
+			tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 20, msg, black)
+
+			msg2 := "y: " + y
+			tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 40, msg2, black)
+
+			var radius int16 = 4
+			if b1push {
+				tinydraw.FilledCircle(&display, 16+32*0, 64-radius-1, radius, black)
+			} else {
+				tinydraw.FilledCircle(&display, 16+32*0, 64-radius-1, radius, realblack)
+				tinydraw.Circle(&display, 16+32*0, 64-radius-1, radius, black)
+			}
+			if b2push {
+				tinydraw.FilledCircle(&display, 16+32*1, 64-radius-1, radius, black)
+			} else {
+				tinydraw.FilledCircle(&display, 16+32*1, 64-radius-1, radius, realblack)
+				tinydraw.Circle(&display, 16+32*1, 64-radius-1, radius, black)
+			}
+			if b3push {
+				tinydraw.FilledCircle(&display, 16+32*2, 64-radius-1, radius, black)
+			} else {
+				tinydraw.FilledCircle(&display, 16+32*2, 64-radius-1, radius, realblack)
+				tinydraw.Circle(&display, 16+32*2, 64-radius-1, radius, black)
+			}
+			if b4push {
+				tinydraw.FilledCircle(&display, 16+32*3, 64-radius-1, radius, black)
+			} else {
+				tinydraw.FilledCircle(&display, 16+32*3, 64-radius-1, radius, realblack)
+				tinydraw.Circle(&display, 16+32*3, 64-radius-1, radius, black)
+			}
 		}
 
 		time.Sleep(100 * time.Millisecond)
