@@ -71,7 +71,7 @@ func (t *Tello) Start() (err error) {
 		}
 	}()
 
-	return err
+	return nil
 }
 
 // TakeOff tells the Tello to takeoff
@@ -107,63 +107,42 @@ func (t *Tello) Land() (err error) {
 
 // Up tells the drone to ascend. Pass in an int from 0-100.
 func (t *Tello) Up(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
 	t.ly = float32(val) / 100.0
 	return nil
 }
 
 // Down tells the drone to descend. Pass in an int from 0-100.
 func (t *Tello) Down(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
-	t.ly = float32(val) / 100.0 * -1
+	t.ly = float32(val) / 100.0 * -1.0
 	return nil
 }
 
 // Forward tells the drone to go forward. Pass in an int from 0-100.
 func (t *Tello) Forward(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
 	t.ry = float32(val) / 100.0
 	return nil
 }
 
 // Backward tells drone to go in reverse. Pass in an int from 0-100.
 func (t *Tello) Backward(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
-	t.ry = float32(val) / 100.0 * -1
+	t.ry = float32(val) / 100.0 * -1.0
 	return nil
 }
 
 // Right tells drone to go right. Pass in an int from 0-100.
 func (t *Tello) Right(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
 	t.rx = float32(val) / 100.0
 	return nil
 }
 
 // Left tells drone to go left. Pass in an int from 0-100.
 func (t *Tello) Left(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
-	t.rx = float32(val) / 100.0 * -1
+	t.rx = float32(val) / 100.0 * -1.0
 	return nil
 }
 
 // Clockwise tells drone to rotate in a clockwise direction. Pass in an int from 0-100.
 func (t *Tello) Clockwise(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
 	t.lx = float32(val) / 100.0
 	return nil
 }
@@ -171,10 +150,7 @@ func (t *Tello) Clockwise(val int) error {
 // CounterClockwise tells drone to rotate in a counter-clockwise direction.
 // Pass in an int from 0-100.
 func (t *Tello) CounterClockwise(val int) error {
-	t.cmdMutex.Lock()
-	defer t.cmdMutex.Unlock()
-
-	t.lx = float32(val) / 100.0 * -1
+	t.lx = float32(val) / 100.0 * -1.0
 	return nil
 }
 
@@ -185,28 +161,29 @@ func (t *Tello) SendStickCommand() (err error) {
 	t.createPacketHeader(stickCommand, 0x60, 11)
 	binary.LittleEndian.PutUint16(t.cmdPacket[7:], 0x00) // seq = 0
 
-	// RightX center=1024 left =364 right =-364
+	// All axes range from 364 to 1684
+	// RightX left =364 right =1684
 	axis1 := int16(660.0*t.rx + 1024.0)
 
-	// RightY down =364 up =-364
+	// RightY down =364 up =1684
 	axis2 := int16(660.0*t.ry + 1024.0)
 
-	// LeftY down =364 up =-364
+	// LeftY down =364 up =1684
 	axis3 := int16(660.0*t.ly + 1024.0)
 
-	// LeftX left =364 right =-364
+	// LeftX left =364 right =1684
 	axis4 := int16(660.0*t.lx + 1024.0)
 
 	// speed control
 	axis5 := int16(t.throttle)
 
-	packedAxis := int64(axis1)&0x7FF | int64(axis2&0x7FF)<<11 | 0x7FF&int64(axis3)<<22 | 0x7FF&int64(axis4)<<33 | int64(axis5)<<44
+	packedAxis := int64(axis1)&0x7FF | int64(axis2&0x7FF)<<11 | int64(axis3&0x7FF)<<22 | int64(axis4&0x7FF)<<33 | int64(axis5)<<44
 	t.cmdPacket[9] = byte(0xFF & packedAxis)
-	t.cmdPacket[10] = byte(packedAxis >> 8 & 0xFF)
-	t.cmdPacket[11] = byte(packedAxis >> 16 & 0xFF)
-	t.cmdPacket[12] = byte(packedAxis >> 24 & 0xFF)
-	t.cmdPacket[13] = byte(packedAxis >> 32 & 0xFF)
-	t.cmdPacket[14] = byte(packedAxis >> 40 & 0xFF)
+	t.cmdPacket[10] = byte(packedAxis >> 8)
+	t.cmdPacket[11] = byte(packedAxis >> 16)
+	t.cmdPacket[12] = byte(packedAxis >> 24)
+	t.cmdPacket[13] = byte(packedAxis >> 32)
+	t.cmdPacket[14] = byte(packedAxis >> 40)
 
 	now := time.Now()
 	t.cmdPacket[15] = byte(now.Hour())
