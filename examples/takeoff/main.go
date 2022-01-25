@@ -54,6 +54,7 @@ func connectToAP(connectHandler func()) {
 		if connectHandler != nil {
 			connectHandler()
 		}
+		return
 	}
 
 	// couldn't connect to AP

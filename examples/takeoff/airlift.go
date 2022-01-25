@@ -10,10 +10,9 @@ import (
 )
 
 var (
-	// default interface for the Arduino Nano33 IoT.
 	spi = machine.SPI0
 
-	// ESP32/ESP8266 chip that has the WIFININA firmware flashed on it
+	// Featherwing with ESP32 that has the WIFININA firmware flashed on it
 	adaptor *wifinina.Device
 )
 
