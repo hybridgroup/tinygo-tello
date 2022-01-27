@@ -67,7 +67,7 @@ func (t *Tello) Start() (err error) {
 			if err != nil {
 				println("stick command error:", err)
 			}
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 
@@ -173,6 +173,8 @@ func (t *Tello) SendStickCommand() (err error) {
 
 	// LeftX left =364 right =1684
 	axis4 := int16(660.0*t.lx + 1024.0)
+
+	println(axis1, axis2, axis3, axis4)
 
 	// speed control
 	axis5 := int16(t.throttle)

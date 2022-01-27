@@ -14,9 +14,9 @@ import (
 const (
 	ssid    = "TELLO-C48E59"
 	pass    = ""
-	speed   = 20
+	speed   = 30
 	center  = 660
-	detente = 250
+	detente = 300
 )
 
 var (
