@@ -154,6 +154,20 @@ func (t *Tello) CounterClockwise(val int) error {
 	return nil
 }
 
+// StartVideo tells Tello to send start info (SPS/PPS) for video stream.
+func (t *Tello) StartVideo() (err error) {
+	t.cmdMutex.Lock()
+	defer t.cmdMutex.Unlock()
+
+	t.createPacketHeader(videoStartCommand, 0x60, 0)
+	binary.LittleEndian.PutUint16(t.cmdPacket[7:], 0x00) // seq = 0
+	binary.LittleEndian.PutUint16(t.cmdPacket[9:], CalculateCRC16(t.cmdPacket[:9]))
+
+	_, err = t.conn.Write(t.cmdPacket[:11])
+
+	return err
+}
+
 func (t *Tello) SendStickCommand() (err error) {
 	t.cmdMutex.Lock()
 	defer t.cmdMutex.Unlock()
@@ -173,8 +187,6 @@ func (t *Tello) SendStickCommand() (err error) {
 
 	// LeftX left =364 right =1684
 	axis4 := int16(660.0*t.lx + 1024.0)
-
-	println(axis1, axis2, axis3, axis4)
 
 	// speed control
 	axis5 := int16(t.throttle)

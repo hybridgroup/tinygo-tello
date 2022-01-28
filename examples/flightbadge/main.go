@@ -42,7 +42,15 @@ func droneConnected() {
 		failMessage(err.Error())
 	}
 
-	println("Started.")
+	println("Drone started.")
+
+	time.Sleep(1 * time.Second)
+
+	println("Starting video...")
+	if err := drone.StartVideo(); err != nil {
+		failMessage(err.Error())
+	}
+	println("Video started.")
 
 	droneconnected = true
 	controlDrone()
@@ -75,6 +83,8 @@ func connectToAP(connectHandler func()) {
 }
 
 func controlDrone() {
+	startvid := true
+
 	for {
 		switch {
 		case b1push:
@@ -128,6 +138,13 @@ func controlDrone() {
 			drone.CounterClockwise(speed)
 		default:
 			drone.Clockwise(0)
+		}
+
+		if startvid {
+			drone.StartVideo()
+			startvid = false
+		} else {
+			startvid = true
 		}
 
 		time.Sleep(50 * time.Millisecond)
