@@ -3,16 +3,14 @@ package tello
 
 import (
 	"encoding/binary"
+	"net"
 	"strconv"
 	"sync"
 	"time"
-
-	"tinygo.org/x/drivers/net"
 )
 
 // Tello represents a client to the DJI Tello drone.
 type Tello struct {
-	adaptor   net.Adapter
 	reqAddr   string
 	reqPort   string
 	respPort  string
@@ -29,9 +27,8 @@ type Tello struct {
 	Flying bool
 }
 
-func New(a net.Adapter, port string) *Tello {
+func New(port string) *Tello {
 	n := &Tello{
-		adaptor:   a,
 		reqAddr:   "192.168.10.1",
 		reqPort:   "8889",
 		respPort:  port,
@@ -42,24 +39,28 @@ func New(a net.Adapter, port string) *Tello {
 }
 
 func (t *Tello) Start() (err error) {
+	println("resolving req addr")
 	reqAddr, err := net.ResolveUDPAddr("udp", t.reqAddr+":"+t.reqPort)
 	if err != nil {
 		return err
 	}
 
-	p, err := strconv.Atoi(t.respPort)
+	println("resolving resp addr")
+	respAddr, err := net.ResolveUDPAddr("udp", "192.168.10.2:"+t.respPort)
 	if err != nil {
 		return err
 	}
-	respPort := &net.UDPAddr{Port: p}
 
-	t.conn, err = net.DialUDP("udp", respPort, reqAddr)
+	println("dialing")
+	t.conn, err = net.DialUDP("udp", respAddr, reqAddr)
 	if err != nil {
 		return err
 	}
 
 	// send connection request using video port
-	t.conn.Write([]byte(t.connectionString()))
+	if _, err := t.conn.Write([]byte(t.connectionString())); err != nil {
+		return err
+	}
 
 	go func() {
 		for {
