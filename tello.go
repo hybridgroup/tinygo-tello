@@ -46,7 +46,7 @@ func (t *Tello) Start() (err error) {
 	}
 
 	println("resolving resp addr")
-	respAddr, err := net.ResolveUDPAddr("udp", "192.168.10.2:"+t.respPort)
+	respAddr, err := net.ResolveUDPAddr("udp", ":"+t.respPort)
 	if err != nil {
 		return err
 	}

@@ -1,19 +1,22 @@
-// TinyGo flight stick using analog joystick and 5 buttons
-// Outputs data via serial port in very simple space-delimited format
-// End of each line of data has "CR-LF" aka 0x13 0x10
-// Each update is sent every 50 ms.
+// TinyGo flight control for the Tello drone in the form of a badge.
 package main
 
 import (
 	"time"
 
+	"tinygo.org/x/drivers/netlink"
+	"tinygo.org/x/drivers/netlink/probe"
+
 	tello "github.com/hybridgroup/tinygo-tello"
 )
 
 // Tello drone info here
+var (
+	ssid string
+	pass string
+)
+
 const (
-	ssid    = "TELLO-C48E59"
-	pass    = ""
 	speed   = 30
 	center  = 660
 	detente = 300
@@ -24,8 +27,20 @@ var (
 )
 
 func main() {
-	a := initAdaptor()
-	drone = tello.New(a, "8888")
+	println("Connecting to drone...")
+
+	link, _ := probe.Probe()
+
+	err := link.NetConnect(&netlink.ConnectParams{
+		Ssid:       ssid,
+		Passphrase: pass,
+	})
+
+	if err != nil {
+		failMessage(err.Error())
+	}
+
+	drone = tello.New("8888")
 
 	initDisplay()
 	go handleDisplay()
@@ -33,10 +48,11 @@ func main() {
 	initControls()
 	go readControls()
 
-	connectToAP(droneConnected)
+	connectDrone()
+	controlDrone()
 }
 
-func droneConnected() {
+func connectDrone() {
 	println("Starting drone...")
 	if err := drone.Start(); err != nil {
 		failMessage(err.Error())
@@ -53,33 +69,6 @@ func droneConnected() {
 	println("Video started.")
 
 	droneconnected = true
-	controlDrone()
-}
-
-// connect to drone wifi
-func connectToAP(connectHandler func()) {
-	var err error
-	time.Sleep(2 * time.Second)
-	for i := 0; i < 3; i++ {
-		println("Connecting to " + ssid)
-		err = adaptor.ConnectToAccessPoint(ssid, pass, 10*time.Second)
-		if err != nil {
-			println(err)
-			time.Sleep(1 * time.Second)
-			continue
-		}
-
-		// success
-		println("Connected.")
-		time.Sleep(3 * time.Second)
-		if connectHandler != nil {
-			connectHandler()
-		}
-		return
-	}
-
-	// couldn't connect to AP
-	failMessage(err.Error())
 }
 
 func controlDrone() {
