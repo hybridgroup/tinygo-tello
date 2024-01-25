@@ -39,19 +39,16 @@ func New(port string) *Tello {
 }
 
 func (t *Tello) Start() (err error) {
-	println("resolving req addr")
 	reqAddr, err := net.ResolveUDPAddr("udp", t.reqAddr+":"+t.reqPort)
 	if err != nil {
 		return err
 	}
 
-	println("resolving resp addr")
 	respAddr, err := net.ResolveUDPAddr("udp", ":"+t.respPort)
 	if err != nil {
 		return err
 	}
 
-	println("dialing")
 	t.conn, err = net.DialUDP("udp", respAddr, reqAddr)
 	if err != nil {
 		return err
