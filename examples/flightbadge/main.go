@@ -16,18 +16,32 @@ var (
 	pass string
 )
 
-const (
-	speed   = 30
-	center  = 660
-	detente = 300
-)
-
 var (
 	drone *tello.Tello
+
+	droneconnected bool
+	takeoff        bool
+	direction      int
 )
 
+const speed = 30
+
+var logo = `
+  ___ _ _      _   _      
+ | __| (_)__ _| |_| |_    
+ | _|| | / _\ | ' \  _|   
+ |_|_|_|_\__, |_||_\__|   
+ | _ ) __|___/| |__ _ ___ 
+ | _ \/ _\ / _\ / _\ / -_)
+ |___/\__,_\__,_\__, \___|
+                |___/     
+`
+
 func main() {
-	println("Connecting to drone...")
+	setupDisplay()
+	time.Sleep(3 * time.Second)
+
+	terminalOutput("enable wireless adapter...")
 
 	link, _ := probe.Probe()
 
@@ -41,109 +55,81 @@ func main() {
 	}
 
 	drone = tello.New("8888")
-
-	initDisplay()
-	go handleDisplay()
-
-	initControls()
-	go readControls()
-
 	connectDrone()
+
+	go readControls()
 	controlDrone()
 }
 
 func connectDrone() {
-	println("Starting drone...")
+	terminalOutput("Starting drone...")
 	if err := drone.Start(); err != nil {
 		failMessage(err.Error())
 	}
 
-	println("Drone started.")
+	terminalOutput("Drone started.")
 
 	time.Sleep(1 * time.Second)
 
-	println("Starting video...")
-	if err := drone.StartVideo(); err != nil {
-		failMessage(err.Error())
-	}
-	println("Video started.")
+	// terminalOutput("Starting video...")
+	// if err := drone.StartVideo(); err != nil {
+	// 	failMessage(err.Error())
+	// }
+	// terminalOutput("Video started.")
 
 	droneconnected = true
 }
 
 func controlDrone() {
-	startvid := true
-
 	for {
-		switch {
-		case b1push:
-			println("takeoff")
-			err := drone.TakeOff()
-			if err != nil {
-				println(err)
-			}
-
-		case b2push:
-			println("land")
-			err := drone.Land()
-			if err != nil {
-				println(err)
-			}
+		if !droneconnected {
+			time.Sleep(100 * time.Millisecond)
+			continue
 		}
 
-		rightStick := getRightStick()
-		switch {
-		case rightStick.y+detente < center:
-			drone.Backward(speed)
-		case rightStick.y-detente > center:
+		switch direction {
+		case directionForward:
 			drone.Forward(speed)
+		case directionBackward:
+			drone.Backward(speed)
 		default:
 			drone.Forward(0)
 		}
 
-		switch {
-		case rightStick.x-detente > center:
-			drone.Right(speed)
-		case rightStick.x+detente < center:
+		switch direction {
+		case directionLeft:
 			drone.Left(speed)
+		case directionRight:
+			drone.Right(speed)
 		default:
 			drone.Right(0)
 		}
 
-		leftStick := getLeftStick()
-		switch {
-		case leftStick.y+detente < center:
-			drone.Down(speed)
-		case leftStick.y-detente > center:
+		switch direction {
+		case directionUp:
 			drone.Up(speed)
+		case directionDown:
+			drone.Down(speed)
 		default:
 			drone.Up(0)
 		}
 
-		switch {
-		case leftStick.x-detente > center:
-			drone.Clockwise(speed)
-		case leftStick.x+detente < center:
+		switch direction {
+		case directionTurnLeft:
 			drone.CounterClockwise(speed)
+		case directionTurnRight:
+			drone.Clockwise(speed)
 		default:
 			drone.Clockwise(0)
 		}
 
-		if startvid {
-			drone.StartVideo()
-			startvid = false
-		} else {
-			startvid = true
-		}
-
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 func failMessage(msg string) {
-	failure = msg
 	for {
-		println(msg)
+		terminalOutput(msg)
 		time.Sleep(1 * time.Second)
 	}
 }
