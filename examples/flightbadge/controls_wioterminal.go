@@ -20,25 +20,28 @@ const (
 	directionTurnRight
 )
 
-var shifted bool
+var (
+	shifted     bool
+	handlanding bool
+)
 
 func readControls() {
-	machine.WIO_5S_UP.Configure(machine.PinConfig{Mode: machine.PinInput})
-	machine.WIO_5S_DOWN.Configure(machine.PinConfig{Mode: machine.PinInput})
-	machine.WIO_5S_LEFT.Configure(machine.PinConfig{Mode: machine.PinInput})
-	machine.WIO_5S_RIGHT.Configure(machine.PinConfig{Mode: machine.PinInput})
-	machine.WIO_5S_PRESS.Configure(machine.PinConfig{Mode: machine.PinInput})
+	machine.WIO_5S_UP.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	machine.WIO_5S_DOWN.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	machine.WIO_5S_LEFT.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	machine.WIO_5S_RIGHT.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	machine.WIO_5S_PRESS.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 
-	machine.BUTTON_1.Configure(machine.PinConfig{Mode: machine.PinInput})
-	machine.BUTTON_2.Configure(machine.PinConfig{Mode: machine.PinInput})
-	machine.BUTTON_3.Configure(machine.PinConfig{Mode: machine.PinInput})
+	machine.BUTTON_1.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	machine.BUTTON_2.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	machine.BUTTON_3.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 
 	for {
 		// takeoff
-		if machine.BUTTON_2.Get() {
+		if !machine.BUTTON_2.Get() {
 			if !takeoff {
 				terminalOutput("takeoff")
-				err := drone.TakeOff()
+				err := drone.ThrowTakeOff()
 				if err != nil {
 					terminalOutput(err.Error())
 				}
@@ -47,7 +50,7 @@ func readControls() {
 		}
 
 		// land
-		if machine.BUTTON_3.Get() {
+		if !machine.BUTTON_1.Get() {
 			terminalOutput("landing")
 			err := drone.Land()
 			if err != nil {
@@ -56,13 +59,21 @@ func readControls() {
 			takeoff = false
 		}
 
-		// front flip
-		if machine.WIO_5S_PRESS.Get() {
-			//handleKey("t")
+		// hand landing
+		if !machine.WIO_5S_PRESS.Get() {
+			if !handlanding {
+				terminalOutput("hand landing")
+				err := drone.PalmLand()
+				if err != nil {
+					terminalOutput(err.Error())
+				}
+				takeoff = false
+				handlanding = true
+			}
 		}
 
 		// hold down button A to shift to access second set of arrow commands
-		if machine.BUTTON_2.Get() {
+		if !machine.BUTTON_3.Get() {
 			shifted = true
 		} else {
 			shifted = false
@@ -70,7 +81,7 @@ func readControls() {
 
 		direction = directionNone
 
-		if machine.WIO_5S_LEFT.Get() {
+		if !machine.WIO_5S_LEFT.Get() {
 			if shifted {
 				direction = directionTurnLeft
 			} else {
@@ -78,7 +89,7 @@ func readControls() {
 			}
 		}
 
-		if machine.WIO_5S_UP.Get() {
+		if !machine.WIO_5S_UP.Get() {
 			if shifted {
 				direction = directionUp
 			} else {
@@ -86,7 +97,7 @@ func readControls() {
 			}
 		}
 
-		if machine.WIO_5S_DOWN.Get() {
+		if !machine.WIO_5S_DOWN.Get() {
 			if shifted {
 				direction = directionDown
 			} else {
@@ -94,7 +105,7 @@ func readControls() {
 			}
 		}
 
-		if machine.WIO_5S_RIGHT.Get() {
+		if !machine.WIO_5S_RIGHT.Get() {
 			if shifted {
 				direction = directionTurnRight
 			} else {

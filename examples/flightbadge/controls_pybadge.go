@@ -5,6 +5,7 @@ package main
 import (
 	"time"
 
+	tello "github.com/hybridgroup/tinygo-tello"
 	"tinygo.org/x/drivers/shifter"
 )
 
@@ -20,7 +21,10 @@ const (
 	directionTurnRight
 )
 
-var shifted bool
+var (
+	shifted bool
+	flip    bool
+)
 
 func readControls() {
 	buttons := shifter.NewButtons()
@@ -53,12 +57,22 @@ func readControls() {
 
 		// front flip
 		if buttons.Pins[shifter.BUTTON_SELECT].Get() {
-			//handleKey("t")
+			if !flip {
+				terminalOutput("flip")
+				err := drone.Flip(tello.FlipFront)
+				if err != nil {
+					terminalOutput(err.Error())
+				}
+				flip = true
+			}
 		}
 
 		// hold down button A to shift to access second set of arrow commands
 		if buttons.Pins[shifter.BUTTON_A].Get() {
 			shifted = true
+
+			// reset flip
+			flip = false
 		} else {
 			shifted = false
 		}
