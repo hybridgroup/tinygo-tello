@@ -20,3 +20,32 @@ const (
 	palmLandCommand         = 0x005e // 94
 	bounceCommand           = 0x1053 // 4179
 )
+
+// FlipType is used for the various flips supported by the Tello.
+type FlipType int
+
+const (
+	// FlipFront flips forward.
+	FlipFront FlipType = 0
+
+	// FlipLeft flips left.
+	FlipLeft FlipType = 1
+
+	// FlipBack flips backwards.
+	FlipBack FlipType = 2
+
+	// FlipRight flips to the right.
+	FlipRight FlipType = 3
+
+	// FlipForwardLeft flips forwards and to the left.
+	FlipForwardLeft FlipType = 4
+
+	// FlipBackLeft flips backwards and to the left.
+	FlipBackLeft FlipType = 5
+
+	// FlipBackRight flips backwards and to the right.
+	FlipBackRight FlipType = 6
+
+	// FlipForwardRight flips forwards and to the right.
+	FlipForwardRight FlipType = 7
+)

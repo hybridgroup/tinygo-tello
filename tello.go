@@ -152,6 +152,53 @@ func (t *Tello) CounterClockwise(val int) error {
 	return nil
 }
 
+// Throw & Go support
+func (t *Tello) ThrowTakeOff() error {
+	t.cmdMutex.Lock()
+	defer t.cmdMutex.Unlock()
+
+	t.createPacketHeader(throwtakeoffCommand, 0x48, 0)
+	t.seq++
+	binary.LittleEndian.PutUint16(t.cmdPacket[7:], uint16(t.seq))
+	binary.LittleEndian.PutUint16(t.cmdPacket[9:], CalculateCRC16(t.cmdPacket[:9]))
+
+	_, err := t.conn.Write(t.cmdPacket[:11])
+
+	return err
+}
+
+// PalmLand tells drone to come in for a landing on the palm of your hand.
+func (t *Tello) PalmLand() error {
+	t.cmdMutex.Lock()
+	defer t.cmdMutex.Unlock()
+
+	t.createPacketHeader(palmLandCommand, 0x68, 1)
+	t.seq++
+	binary.LittleEndian.PutUint16(t.cmdPacket[7:], uint16(t.seq))
+	t.cmdPacket[9] = 0x00
+	binary.LittleEndian.PutUint16(t.cmdPacket[10:], CalculateCRC16(t.cmdPacket[:10]))
+
+	_, err := t.conn.Write(t.cmdPacket[:12])
+
+	return err
+}
+
+// Flip tells drone to flip
+func (t *Tello) Flip(direction FlipType) error {
+	t.cmdMutex.Lock()
+	defer t.cmdMutex.Unlock()
+
+	t.createPacketHeader(flipCommand, 0x70, 1)
+	t.seq++
+	binary.LittleEndian.PutUint16(t.cmdPacket[7:], uint16(t.seq))
+	t.cmdPacket[9] = byte(direction)
+	binary.LittleEndian.PutUint16(t.cmdPacket[10:], CalculateCRC16(t.cmdPacket[:10]))
+
+	_, err := t.conn.Write(t.cmdPacket[:12])
+
+	return err
+}
+
 // StartVideo tells Tello to send start info (SPS/PPS) for video stream.
 func (t *Tello) StartVideo() (err error) {
 	t.cmdMutex.Lock()
