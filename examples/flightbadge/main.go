@@ -45,6 +45,8 @@ func main() {
 
 	link, _ := probe.Probe()
 
+	terminalOutput("searching for drone...")
+
 	err := link.NetConnect(&netlink.ConnectParams{
 		Ssid:       ssid,
 		Passphrase: pass,
